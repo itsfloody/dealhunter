@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from dealhunter.filters.ingredients import contains_banned_ingredient
 from dealhunter.ranking.scorer import DealScore, calculate_deal_score
 from dealhunter.scrapers.base import BaseScraper
@@ -19,16 +21,34 @@ class DealHunter:
         return deals
 
     async def _scrape_products(self):
+        tasks = [
+            scraper.scrape()
+            for scraper in self.scrapers
+        ]
+
+        results = await asyncio.gather(
+            *tasks,
+            return_exceptions=True,
+        )
+
         products = []
 
-        for scraper in self.scrapers:
-            print(f"\nRunning {scraper.name}...")
+        for scraper, result in zip(
+            self.scrapers,
+            results,
+        ):
+            if isinstance(result, Exception):
+                print(
+                    f"❌ {scraper.name} failed: {result}"
+                )
+                continue
 
-            scraped = await scraper.scrape()
+            print(
+                f"{scraper.name}: "
+                f"{len(result)} products"
+            )
 
-            print(f"Found {len(scraped)} products")
-
-            products.extend(scraped)
+            products.extend(result)
 
         return products
 
@@ -36,8 +56,13 @@ class DealHunter:
         accepted = []
 
         for product in products:
-            if contains_banned_ingredient(product.ingredients):
-                print(f"Rejected {product.name} (banned ingredient)")
+            if contains_banned_ingredient(
+                product.ingredients
+            ):
+                print(
+                    f"Rejected {product.name} "
+                    "(banned ingredient)"
+                )
                 continue
 
             accepted.append(product)
@@ -45,9 +70,15 @@ class DealHunter:
         return accepted
 
     def _rank_products(self, products):
-        deals = [calculate_deal_score(product) for product in products]
+        deals = [
+            calculate_deal_score(product)
+            for product in products
+        ]
 
-        deals.sort(key=lambda deal: deal.score, reverse=True)
+        deals.sort(
+            key=lambda deal: deal.score,
+            reverse=True,
+        )
 
         return deals
 
@@ -55,9 +86,21 @@ class DealHunter:
         print("\n🏆 Best Deals\n")
 
         for deal in deals:
-            print(f"{deal.product.brand} - {deal.product.name}")
-            print(f"Store: {deal.product.store}")
-            print(f"Price/kg: ${deal.price_per_kg}")
-            print(f"Protein-adjusted: ${deal.protein_cost_per_kg}/kg")
-            print(f"Score: {deal.score}")
+            print(
+                f"{deal.product.brand} - "
+                f"{deal.product.name}"
+            )
+            print(
+                f"Store: {deal.product.store}"
+            )
+            print(
+                f"Price/kg: ${deal.price_per_kg}"
+            )
+            print(
+                f"Protein-adjusted: "
+                f"${deal.protein_cost_per_kg}/kg"
+            )
+            print(
+                f"Score: {deal.score}"
+            )
             print("-" * 40)
