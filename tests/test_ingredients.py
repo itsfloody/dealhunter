@@ -11,9 +11,7 @@ def test_detects_stevia():
         "Stevia extract",
     ]
 
-    assert contains_banned_ingredient(
-        ingredients
-    )
+    assert contains_banned_ingredient(ingredients)
 
 
 def test_allows_normal_product():
@@ -24,6 +22,4 @@ def test_allows_normal_product():
         "Sucralose",
     ]
 
-    assert not contains_banned_ingredient(
-        ingredients
-    )
+    assert not contains_banned_ingredient(ingredients)

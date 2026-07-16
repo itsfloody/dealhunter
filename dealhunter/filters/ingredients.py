@@ -15,11 +15,6 @@ def contains_banned_ingredient(
     an ingredient we want to avoid.
     """
 
-    combined = " ".join(
-        ingredients
-    ).lower()
+    combined = " ".join(ingredients).lower()
 
-    return any(
-        banned in combined
-        for banned in BANNED_INGREDIENTS
-    )
+    return any(banned in combined for banned in BANNED_INGREDIENTS)

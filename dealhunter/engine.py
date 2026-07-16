@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+from dealhunter.filters.ingredients import contains_banned_ingredient
+from dealhunter.ranking.scorer import DealScore, calculate_deal_score
+from dealhunter.scrapers.base import BaseScraper
+
+
+class DealHunter:
+    def __init__(self, scrapers: list[BaseScraper]):
+        self.scrapers = scrapers
+
+    async def run(self) -> list[DealScore]:
+        products = await self._scrape_products()
+        products = self._filter_products(products)
+        deals = self._rank_products(products)
+
+        self._display(deals)
+
+        return deals
+
+    async def _scrape_products(self):
+        products = []
+
+        for scraper in self.scrapers:
+            print(f"\nRunning {scraper.name}...")
+
+            scraped = await scraper.scrape()
+
+            print(f"Found {len(scraped)} products")
+
+            products.extend(scraped)
+
+        return products
+
+    def _filter_products(self, products):
+        accepted = []
+
+        for product in products:
+            if contains_banned_ingredient(product.ingredients):
+                print(f"Rejected {product.name} (banned ingredient)")
+                continue
+
+            accepted.append(product)
+
+        return accepted
+
+    def _rank_products(self, products):
+        deals = [calculate_deal_score(product) for product in products]
+
+        deals.sort(key=lambda deal: deal.score, reverse=True)
+
+        return deals
+
+    def _display(self, deals: list[DealScore]) -> None:
+        print("\n🏆 Best Deals\n")
+
+        for deal in deals:
+            print(f"{deal.product.brand} - {deal.product.name}")
+            print(f"Store: {deal.product.store}")
+            print(f"Price/kg: ${deal.price_per_kg}")
+            print(f"Protein-adjusted: ${deal.protein_cost_per_kg}/kg")
+            print(f"Score: {deal.score}")
+            print("-" * 40)

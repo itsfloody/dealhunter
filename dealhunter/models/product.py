@@ -19,9 +19,7 @@ class Product(BaseModel):
 
     url: str
 
-    scraped_at: datetime = Field(
-        default_factory=datetime.utcnow
-    )
+    scraped_at: datetime = Field(default_factory=datetime.utcnow)
 
     @property
     def total_cost(self) -> float:
