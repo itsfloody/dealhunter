@@ -5,7 +5,7 @@ import asyncio
 from dealhunter.filters.ingredients import contains_banned_ingredient
 from dealhunter.ranking.scorer import DealScore, calculate_deal_score
 from dealhunter.scrapers.base import BaseScraper
-
+from dealhunter.utils.logging import logger
 
 class DealHunter:
     def __init__(self, scrapers: list[BaseScraper]):
@@ -38,14 +38,17 @@ class DealHunter:
             results,
         ):
             if isinstance(result, Exception):
-                print(
-                    f"❌ {scraper.name} failed: {result}"
+                logger.error(
+                    "%s failed: %s",
+                    scraper.name,
+                    result,
                 )
                 continue
 
-            print(
-                f"{scraper.name}: "
-                f"{len(result)} products"
+            logger.info(
+                "%s returned %s products",
+                scraper.name,
+                len(result),
             )
 
             products.extend(result)
