@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
+from dealhunter.database.repository import save_products
 from dealhunter.filters.ingredients import contains_banned_ingredient
 from dealhunter.ranking.scorer import DealScore, calculate_deal_score
 from dealhunter.scrapers.base import BaseScraper
@@ -13,7 +14,12 @@ class DealHunter:
 
     async def run(self) -> list[DealScore]:
         products = await self._scrape_products()
-        products = self._filter_products(products)
+        products = self._filter_products(
+            products
+        )
+
+        save_products(products)
+
         deals = self._rank_products(products)
 
         self._display(deals)
